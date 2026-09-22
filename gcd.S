@@ -1,22 +1,23 @@
 .global gcd
 # a in %edi, b in %esi; result in %eax
 gcd:
-    cmpl $0, %esi       # %esi - 0
-    je .L_done          # if %esi - 0 = 0 or %esi = 0 -> jump to .L_done
+    cmpl $0, %esi              # Base case: if (b == 0)
+    je .L_base_case            # Return a
 
-    # compute a % b
-    movl %edi, %eax     # %eax = a
-    cltd                # Sign-extend %eax into %edx:%eax
-    idivl %esi          # Divide %edx:%eax by b (%esi). Quotient in %eax, Remainder in %edx
+    # Compute a % b
+    movl %edi, %eax            # %eax = a
+    cltd                       # Sign-extend %eax into %edx:%eax
+    idivl %esi                 # Quotient in %eax, Remainder in %edx
 
-    # recursive: gcd(b, a % b)
-    movl %esi, %edi            # a_new = b
-    movl %edx, %esi            # b_new = a % b
-    jmp .L_loop                # Jump back to loop
+    # Set up arguments for recursive call: gcd(b, a % b)
+    movl %esi, %edi            # 1st arg: b
+    movl %edx, %esi            # 2nd arg: a % b
+    call gcd                   # Recursive call gcd(b, a % b)
+    retq                       # Return result from recursive call
 
-.L_done:
-    movl %edi, %eax     # %eax = %edi or result = a 
-    retq                # return a
+.L_base_case:
+    movl %edi, %eax            # Return a
+    retq
 
 
 # greatest common divisor via Euclid's algorithm (recursive)

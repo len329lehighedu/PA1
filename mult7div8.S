@@ -1,40 +1,43 @@
 .global mult7div8
-# a in %dil (signed char), overflow pointer in %rsi
-# Returns mult / 8 in %al (sign-extended to %eax)
+
 mult7div8:
-  # Compute mult = 7 * a
-  movb %dil, %al             # %al = a
-  movb $7, %cl               # %cl = 7
-  imulb %cl                  # %ax = %al * 7 (8-bit result in %al)
+    # 1. Compute mult = 7 * a using 8-bit multiplication
+    movb %dil, %al              # Load 'a' into %al
+    movb $7, %cl                # Load constant 7 into %cl
+    imulb %cl                   # %ax = 7 * a. Lower 8 bits (%al) holds 'mult'
 
-  # Check overflow condition: (a > 0 && mult < 0) || (a < 0 && mult > 0)
-  movb $0, (%rsi)            # Default: *overflow = 0
+    # 2. Set default overflow status to 0 (false)
+    movb $0, (%rsi)             # *overflow = 0
 
-  cmpb $0, %dil              # Compare a with 0
-  jge .L_a_non_negative      # If a >= 0, check non-negative branch
+    # 3. Check for 8-bit signed overflow condition:
+    #    overflow occurs if (a > 0 && mult < 0) OR (a < 0 && mult > 0)
+    cmpb $0, %dil               # Compare 'a' with 0
+    jge .L_a_non_negative       # Jump if a >= 0
 
 .L_a_negative:
-  # If a < 0, overflow happens if mult > 0
-  cmpb $0, %al
-  jle .L_divide              # If mult <= 0, no overflow
-  movb $1, (%rsi)            # *overflow = 1
-  jmp .L_divide
+    # Case: a < 0. Overflow if mult (%al) > 0
+    cmpb $0, %al                # Compare 'mult' with 0
+    jle .L_divide               # If mult <= 0, no overflow -> proceed to divide
+    movb $1, (%rsi)             # Set *overflow = 1
+    jmp .L_divide               # Proceed to divide
 
 .L_a_non_negative:
-  jle .L_divide              # If a == 0, no overflow
-  # If a > 0, overflow happens if mult < 0
-  cmpb $0, %al
-  jge .L_divide              # If mult >= 0, no overflow
-  movb $1, (%rsi)            # *overflow = 1
+    je .L_divide                # If a == 0, no overflow -> proceed to divide
+    # Case: a > 0. Overflow if mult (%al) < 0
+    cmpb $0, %al                # Compare 'mult' with 0
+    jge .L_divide               # If mult >= 0, no overflow -> proceed to divide
+    movb $1, (%rsi)             # Set *overflow = 1
 
 .L_divide:
-  # Compute mult / 8
-  cbw                        # Sign-extend %al into 16-bit %ax
-  movb $8, %cl               # Divisor = 8
-  idivb %cl                  # Divide %ax by 8: Quotient in %al, Remainder in %ah
+    # 4. Perform signed division: mult / 8
+    # Sign-extend 8-bit mult (%al) into 16-bit %ax for idivb
+    cbw                         # Convert byte in %al to word in %ax
+    movb $8, %cl                # Load divisor 8 into %cl
+    idivb %cl                   # %ax / %cl -> Quotient in %al, Remainder in %ah
 
-  movsbl %al, %eax           # Sign-extend result %al to %eax for return
-  retq
+    # 5. Prepare 32-bit return value
+    movsbl %al, %eax            # Sign-extend 8-bit quotient (%al) into %eax
+    retq
 
 
 # char mult7div8(char a, char *overflow){
