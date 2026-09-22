@@ -62,3 +62,5 @@ Submit only .S files:
 4) Submit all your codes on Gradescope for grading.
 # PA1
 # PA1
+
+LINK TO THE IMAGE OF NUMBER OF TEST CASES PASSED: https://drive.google.com/drive/folders/1_VoaUGv3HsuSbZ_xah6Jmn__UMjhOYL3
