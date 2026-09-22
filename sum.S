@@ -5,6 +5,15 @@
 #   offset 8  : value
 #   offset 16 : next
 sum:
+    movq $0, %rax   # total = 0
+
+.L_loop:
+    cmpq $0, %rdi       # %rdi - 0 (check ptr != null)
+    je .L_done          # if %rdi = 0 (or ptr = null) -> out while loop, return total
+    addq 8(%rdi), %rax  # get memory at %rdi + 8 and add to %rax (total += ptr->value)
+    movq 16(%rdi), %rdi # get pointer's value at memory 16 + %rdi, put into %rdi (ptr = ptr->next)
+    jmp .L_loop         # continue the loop 
+.L_done:
     retq
 
 
